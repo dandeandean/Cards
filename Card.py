@@ -15,6 +15,3 @@ class Card:
 
     def last_viewed(self):
         return self.last_reviewed
-
-
-    
