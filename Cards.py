@@ -76,7 +76,7 @@ class Database:
             self.exe()(f"CREATE TABLE {table}({', '.join(cols)})")
             print(f"CREATED: TABLE: {table} | {cols} in {self.get_name_stripped()}")
         except:
-            print("Connected to database!")
+            print(f"Connected to database at {self.__name}")
             #print(f" TABLE: {table} | [{', '.join(cols)}] in {self.get_name_stripped()}")
         
     def exe(self):
@@ -86,8 +86,12 @@ class Database:
         return self.select(["*"],"cards").fetchall()
     
     def push_card(self, card: Card):
-        self.exe()(f"""INSERT INTO {self.get_name_stripped()} VALUES
-                    ('{card.front}', '{card.back}', {card.get_current_bin()}, {card.get_last_viewed()})""")
+        #FIXME
+        payload = f"""
+        INSERT INTO {self.get_name_stripped()} VALUES
+                    ('{card.front}', '{card.back}', {card.get_current_bin()}, '{card.get_last_viewed()}')
+                    """
+        self.exe()(payload)
         self.get_con().commit()
         
     def delete_db(self):

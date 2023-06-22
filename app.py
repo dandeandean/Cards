@@ -21,13 +21,24 @@ def new(front: str, back: str):
     new_card = Card(front,back)
     db.push_card(new_card)
     print(f"added card {new_card}")
-
-def main():
+    
+@app.command()
+def show_cards():
     cards = db.cards_from_db()
     table = Table("Front", "Back","Box")
     for card in cards:
         table.add_row(card.get_front(),card.get_back(),str(card.get_current_bin()))
     con.print(table)
+
+@app.command()
+def delete(front: str, back: str):
+    # This needs to be implemented in Database
+    pass
+
+@app.command()
+def practice():
+    # We will need a way to update the values of bin and last practiced
+    pass
 
 if __name__ == "__main__":
     app()
