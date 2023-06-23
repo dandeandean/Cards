@@ -76,7 +76,8 @@ class Database:
             self.exe()(f"CREATE TABLE {table}({', '.join(cols)})")
             print(f"CREATED: TABLE: {table} | {cols} in {self.get_name_stripped()}")
         except:
-            print(f"Connected to database at {self.__name}")
+            #print(f"Connected to database at {self.__name}")
+            pass
             #print(f" TABLE: {table} | [{', '.join(cols)}] in {self.get_name_stripped()}")
         
     def exe(self):
@@ -105,4 +106,27 @@ class Database:
         out =list()
         for tup in self.get_all_cards():
             out.append(Card(tup[0],tup[1],tup[2]))
+        return out
+    
+    def delete_card(self, front, back):
+        payload = f"DELETE FROM {self.get_name_stripped()} WHERE front='{front}' and back = '{back}'"
+        self.exe()(payload)
+        self.get_con().commit()
+        
+    def set_box(self,front,back, new_box):
+        payload = f"UPDATE {self.get_name_stripped()} SET current_bin={new_box} WHERE front = '{front}' and back = '{back}'"
+        self.exe()(payload)
+        self.get_con().commit()
+        
+    def get_box(self,front,back):
+        res = self.exe()(f"SELECT current_bin FROM {self.get_name_stripped()} WHERE front = '{front}' and back= '{back}'")
+        if res.fetchone() is None:
+            return None
+        return res.fetchone()[0]
+    
+    def cards_by_box(self,n):
+        out =list()
+        for tup in self.get_all_cards():
+            if tup[2] == n:
+                out.append(Card(tup[0],tup[1],tup[2]))
         return out

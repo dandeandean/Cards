@@ -3,6 +3,7 @@ from rich import print
 from rich.console import Console
 from rich.table import Table
 from Cards import Card, Database
+import random
 con = Console()
 app = typer.Typer()
 db = Database()
@@ -33,12 +34,15 @@ def show_cards():
 @app.command()
 def delete(front: str, back: str):
     # This needs to be implemented in Database
-    pass
+    db.delete_card(front,back)
 
 @app.command()
-def practice():
-    # We will need a way to update the values of bin and last practiced
-    pass
+def practice(n:int=10):
+    boxes = [db.cards_by_box(0), db.cards_by_box(1),db.cards_by_box(2),db.cards_by_box(3),db.cards_by_box(4)] 
+    box_lens = [len(box) for box in boxes]
+    #r = random.sample(boxes[0],9)
+    print(boxes,box_lens)
 
+# The main thing
 if __name__ == "__main__":
     app()
