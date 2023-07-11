@@ -28,7 +28,7 @@ class Card:
     def time_delta(self):
         return datetime.timestamp(datetime.now()) - self.get_last_viewed()
     
-    def view(self):
+    def practice(self):
         self.set_last_viewed()
         inp = input(f"{self.front} | ")
         misses = 0
@@ -40,6 +40,8 @@ class Card:
             inp = input(f"{self.front} | ")
         if misses == 4:
             print(f"The back of the card is {self.back} \nYou said {', '.join(miss_list)}")
+            return 0
+        return 1
     
 class Database:
     def __init__(self, name:str="cards.db"):
@@ -113,11 +115,11 @@ class Database:
         self.exe()(payload)
         self.get_con().commit()
         
-    def set_box(self,front,back, new_box):
-        payload = f"UPDATE {self.get_name_stripped()} SET current_bin={new_box} WHERE front = '{front}' and back = '{back}'"
+    def set_box(self,front, back, new_box):
+        payload = f"UPDATE {self.get_name_stripped()} SET current_bin = {new_box} WHERE front = '{front}' and back = '{back}'"
         self.exe()(payload)
         self.get_con().commit()
-        
+
     def get_box(self,front,back):
         res = self.exe()(f"SELECT current_bin FROM {self.get_name_stripped()} WHERE front = '{front}' and back= '{back}'")
         if res.fetchone() is None:
