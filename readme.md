@@ -1,12 +1,15 @@
 ## Dependencies 
-    
-    pip install "typer[all]"
 
+Dependencies managed with [poetry](https://python-poetry.org/)
+
+```bash
+poetry install 
+```
+    
 
 ## Start Up
 
 ```bash 
-poetry install 
 poetry shell 
 
 # Once for example data
@@ -14,6 +17,8 @@ python scripts/populate-db.py
 ```
 
 ## Usage
+
+With the environment activated, you can run the command line tool with the `card` command.
 
 ```bash 
 card --help
