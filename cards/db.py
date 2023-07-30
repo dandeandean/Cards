@@ -9,13 +9,13 @@ class CardCategoryLink(SQLModel, table=True):
         default=None, foreign_key="card.id", primary_key=True
     )
     category_id: Optional[int] = Field(
-        default=None, foreign_key="category.id", primary_key=True
+        default=None, foreign_key="category.id", primary_key=True, index=True
     )
 
 
 class Card(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
-    front: str
+    front: str = Field(index=True)
     back: str
 
     categories: List["Category"] = Relationship(
@@ -56,6 +56,7 @@ class PracticeHistory(SQLModel, table=True):
     card_id: int = Field(foreign_key="card.id")
     session_id: int = Field(foreign_key="practicesession.id")
     datetime: str = Field(default_factory=right_now)
+    guess: str
     correct: bool
 
 

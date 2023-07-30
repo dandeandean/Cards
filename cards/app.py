@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 import typer
 
 from rich.console import Console
@@ -22,7 +24,7 @@ console = Console()
 
 
 @app.command()
-def new_card():
+def new():
     """Create a new card."""
     console.print("Creating a new card...")
     name = console.input("category: ")
@@ -34,6 +36,7 @@ def new_card():
         category = session.exec(select(Category).where(Category.name == name)).first()
 
         if category is None:
+            # Create
             category = Category(name=name)
 
         card = Card(front=front, back=back, categories=[category])
@@ -45,6 +48,16 @@ def new_card():
     console.print(f"[green]Created card: {card}[/green]")
 
 
+def cards_for_category(name: str, session) -> List[Card]:
+    category = session.exec(select(Category).where(Category.name == name)).first()
+
+    if category is None:
+        console.print(f"[red]No category named {name}[/red]")
+        raise typer.Exit(code=1)
+
+    return category.cards
+
+
 @app.command()
 def ls():
     """List cards in a category."""
@@ -53,64 +66,75 @@ def ls():
 
     engine = get_engine()
     with Session(engine) as session:
-        result = session.exec(
-            select(Category).where(Category.name == desired_category)
-        ).first()
+        cards = cards_for_category(desired_category, session)
 
-        if result is None:
-            console.print(f"[red]No category named {desired_category}[/red]")
-            return
-
-        for card in result.cards:
+        for card in cards:
             console.print(card)
 
 
-def list_all_from_table(engine, model, name: str):
-    with Session(engine) as session:
-        statement = select(model)
-        results = session.exec(statement).fetchall()
+def get_all_from_table(session, model, name: str):
+    statement = select(model)
+    results = session.exec(statement).fetchall()
 
-        if not results:
-            console.print(f"[red]No [bold]{name}[/bold] found[/red]")
-            return
+    if not results:
+        console.print(f"[red]No [bold]{name}[/bold] found[/red]")
+        raise typer.Exit(code=1)
 
-        for item in results:
-            console.print(item)
+    return results
+
+
+def list_all_from_table(session, model, name: str, max_to_show: Optional[int] = None):
+    results = get_all_from_table(session, model, name)
+
+    total = len(results)
+    n_to_show = max_to_show or total
+
+    for item in results[:n_to_show]:
+        console.print(item)
+
+    if total > n_to_show:
+        console.print(f"... and {total - n_to_show} more")
 
 
 @app.command(rich_help_panel="Dev")
-def all_cards() -> None:
+def all_cards(show_all: bool = False) -> None:
     """List all cards."""
+    max_to_show = None if show_all else 10
     engine = get_engine()
-    list_all_from_table(engine, Card, "cards")
+    with Session(engine) as session:
+        list_all_from_table(session, Card, "cards", max_to_show=max_to_show)
 
 
 @app.command(rich_help_panel="Dev")
 def all_categories() -> None:
     """List all categories."""
     engine = get_engine()
-    list_all_from_table(engine, Category, "categories")
+    with Session(engine) as session:
+        list_all_from_table(session, Category, "categories")
 
 
 @app.command(rich_help_panel="Dev")
 def all_practice_types() -> None:
     """List all practice types."""
     engine = get_engine()
-    list_all_from_table(engine, PracticeType, "practice types")
+    with Session(engine) as session:
+        list_all_from_table(session, PracticeType, "practice types")
 
 
 @app.command(rich_help_panel="Dev")
 def all_practice_sessions() -> None:
     """List all practice sessions."""
     engine = get_engine()
-    list_all_from_table(engine, PracticeSession, "practice sessions")
+    with Session(engine) as session:
+        list_all_from_table(session, PracticeSession, "practice sessions")
 
 
 @app.command(rich_help_panel="Dev")
 def all_practice_history() -> None:
     """List all practice history."""
     engine = get_engine()
-    list_all_from_table(engine, PracticeHistory, "practice history")
+    with Session(engine) as session:
+        list_all_from_table(session, PracticeHistory, "practice history")
 
 
 @app.command()
@@ -121,18 +145,15 @@ def delete():
 
 
 @app.command()
-def practice():
+def practice(forward: bool = True):
     """Practice cards."""
     engine = get_engine()
     with Session(engine) as session:
-        name = console.input("category: ")
-        result = session.exec(select(Category).where(Category.name == name)).first()
+        categories = get_all_from_table(session, Category, "categories")
+        category_names = [category.name for category in categories]
+        name = Prompt.ask("category: ", choices=category_names)
 
-        if result is None:
-            console.print(f"[red]No category named {name}[/red]")
-            return
-
-        cards = result.cards
+        cards = cards_for_category(name, session)
 
         method = Prompt.ask(
             "method: ", choices=available_practice_types.keys(), default="random"
@@ -155,17 +176,24 @@ def practice():
 
         ordered_cards = available_practice_types[method](cards)
 
-        n = IntPrompt.ask("max number of cards: ")
-        max_tries = IntPrompt.ask("max number of tries: ")
+        n = IntPrompt.ask("max number of cards: ", default=min(3, len(cards)))
+        max_tries = IntPrompt.ask("max number of tries: ", default=3)
         tries = 0
         for card in ordered_cards[:n]:
+            # TODO: Isolate this to allow for different practice types
             while tries < max_tries:
-                guess = console.input(f"what is the back of {card.front}? ")
+                question, correct_answer = (
+                    (card.front, card.back) if forward else (card.back, card.front)
+                )
 
-                answered_correctly = exactly_correct(guess, card.back)
+                guess = console.input(f"what is the back of {question!r}? ")
+                # TODO: Look up in database if alternatives are correct
+                answered_correctly = exactly_correct(guess, correct_answer)
+
                 practice_element = PracticeHistory(
                     card_id=card.id,
                     session_id=practice_session.id,
+                    guess=guess,
                     correct=answered_correctly,
                 )
                 session.add(practice_element)
@@ -173,7 +201,13 @@ def practice():
                 if answered_correctly:
                     console.print("[green]Correct![/green]")
                     break
+
+                tries += 1
+                console.print(
+                    f"[red]Incorrect. Try again. ({tries} / {max_tries})[/red]"
+                )
             else:
+                tries = 0
                 console.print(
                     f"[red]Incorrect. The answer is[/red] [bold]{card.back}[/bold]"
                 )

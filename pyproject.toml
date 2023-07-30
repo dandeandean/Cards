@@ -12,7 +12,7 @@ numpy = "^1.25.1"
 sqlmodel = "^0.0.8"
 
 [tool.poetry.scripts]
-practice = "cards.__main__:main"
+card = "cards.__main__:main"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
