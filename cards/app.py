@@ -182,11 +182,11 @@ def practice(forward: bool = True):
         for card in ordered_cards[:n]:
             # TODO: Isolate this to allow for different practice types
             while tries < max_tries:
-                question, correct_answer = (
-                    (card.front, card.back) if forward else (card.back, card.front)
+                side, question, correct_answer = (
+                    ("front", card.front, card.back) if forward else ("back", card.back, card.front)
                 )
 
-                guess = console.input(f"what is the back of {question!r}? ")
+                guess = console.input(f"what is the {side} of {question!r}? ")
                 # TODO: Look up in database if alternatives are correct
                 answered_correctly = exactly_correct(guess, correct_answer)
 
