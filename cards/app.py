@@ -28,8 +28,6 @@ def new():
     """Create a new card."""
     console.print("Creating a new card...")
     name = console.input("category: ")
-    front = console.input("front: ")
-    back = console.input("back: ")
 
     engine = get_engine()
     with Session(engine) as session:
@@ -39,6 +37,8 @@ def new():
             # Create
             category = Category(name=name)
 
+        front = console.input("front: ")
+        back = console.input("back: ")
         card = Card(front=front, back=back, categories=[category])
         session.add(card)
         session.commit()
@@ -72,7 +72,7 @@ def ls():
             console.print(card)
 
 
-def get_all_from_table(session, model, name: str):
+def get_all_from_table(session, model, name: str) -> List:
     statement = select(model)
     results = session.exec(statement).fetchall()
 
@@ -138,14 +138,18 @@ def all_practice_history() -> None:
 
 
 @app.command()
-def delete():
+def delete() -> None:
     """Delete a card."""
     console.print("[red]Currently not implemented.")
     raise typer.Exit()
 
 
 @app.command()
-def practice(forward: bool = True):
+def practice(
+    forward: bool = typer.Option(
+        True, "--forward/--backward", help="Practice cards forward or backward."
+    )
+) -> None:
     """Practice cards."""
     engine = get_engine()
     with Session(engine) as session:
@@ -183,7 +187,9 @@ def practice(forward: bool = True):
             # TODO: Isolate this to allow for different practice types
             while tries < max_tries:
                 side, question, correct_answer = (
-                    ("front", card.front, card.back) if forward else ("back", card.back, card.front)
+                    ("front", card.front, card.back)
+                    if forward
+                    else ("back", card.back, card.front)
                 )
 
                 guess = console.input(f"what is the {side} of {question!r}? ")
