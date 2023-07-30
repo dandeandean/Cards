@@ -52,6 +52,9 @@ Practice the cards for a category
 
 ```bash
 card practice
+```
+
+```text
 category:  [German/German Verbs/Basic German/French/Statistics/Country Capitals/Capitals]: German
 method:  [random/same/most-recent] (random):
 max number of cards:  (3):
@@ -76,6 +79,8 @@ Practice history data
 
 ```bash
 card all-practice-history
+```
+```text
 PracticeHistory(session_id=1, guess='bitte', datetime='2023-07-30T10:56:34.608060', id=1, card_id=20, correct=False)
 PracticeHistory(session_id=1, guess='Bitte', datetime='2023-07-30T10:56:36.309292', id=2, card_id=20, correct=False)
 PracticeHistory(session_id=1, guess='Gern geschehen', datetime='2023-07-30T10:56:43.248711', id=3, card_id=20, correct=False)
