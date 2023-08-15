@@ -4,7 +4,7 @@ import typer
 
 from rich.console import Console
 from rich.prompt import Prompt, IntPrompt
-
+from rich.table import Table
 from sqlmodel import Session, select
 
 from cards.db import (
@@ -61,7 +61,8 @@ def cards_for_category(name: str, session) -> List[Card]:
 @app.command()
 def ls():
     """List cards in a category."""
-    console.print("ls")
+    console.print("Categories")
+    all_categories()
     desired_category = console.input("category: ")
 
     engine = get_engine()
@@ -110,7 +111,14 @@ def all_categories() -> None:
     """List all categories."""
     engine = get_engine()
     with Session(engine) as session:
-        list_all_from_table(session, Category, "categories")
+        # list_all_from_table(session, Category, "categories")
+        cats = get_all_from_table(session, Category, "categories")
+
+    table = Table("Category", "ID")
+    for cat in cats:
+        table.add_row(cat.name, str(cat.id))
+    console.print(table)
+
 
 
 @app.command(rich_help_panel="Dev")
