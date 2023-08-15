@@ -57,6 +57,10 @@ def cards_for_category(name: str, session) -> List[Card]:
 
     return category.cards
 
+def category_id_to_name(id: int, session) -> str:
+    category = session.exec(select(Category).where(Category.id == id)).first()
+    return category.name
+
 
 @app.command()
 def ls():
@@ -67,10 +71,18 @@ def ls():
 
     engine = get_engine()
     with Session(engine) as session:
+        # check if they passed the ID
+        if desired_category.isnumeric():
+            desired_category = category_id_to_name(desired_category,session)
+
         cards = cards_for_category(desired_category, session)
 
+        table = Table("Front", "Back")
         for card in cards:
-            console.print(card)
+            # console.print(card)
+            table.add_row(card.front, str(card.back))
+
+        console.print(table)
 
 
 def get_all_from_table(session, model, name: str) -> List:
