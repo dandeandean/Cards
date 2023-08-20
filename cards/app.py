@@ -5,7 +5,9 @@ import typer
 from rich.console import Console
 from rich.prompt import Prompt, IntPrompt
 from rich.table import Table
+from rich.panel import Panel
 from sqlmodel import Session, select
+import os
 
 from cards.db import (
     get_engine,
@@ -21,6 +23,11 @@ from cards.practice import available_practice_types
 
 app = typer.Typer()
 console = Console()
+
+def print_card(card: Card, category: Category = None):
+    if category == None:
+        category = card.categories[0].name
+    console.print(Panel.fit(f"{card.front} | {card.back}",title=f"{category}"))
 
 
 @app.command()
@@ -59,6 +66,10 @@ def cards_for_category(name: str, session) -> List[Card]:
 
 def category_id_to_name(id: int, session) -> str:
     category = session.exec(select(Category).where(Category.id == id)).first()
+    if category is None:
+        console.print(f"[red]Invalid category ID {id}[/red]")
+        raise typer.Exit(code=1)
+
     return category.name
 
 
@@ -74,6 +85,7 @@ def ls():
         # check if they passed the ID
         if desired_category.isnumeric():
             desired_category = category_id_to_name(desired_category,session)
+
 
         cards = cards_for_category(desired_category, session)
 
@@ -103,6 +115,8 @@ def list_all_from_table(session, model, name: str, max_to_show: Optional[int] = 
     n_to_show = max_to_show or total
 
     for item in results[:n_to_show]:
+        print_card(item)
+        print(type(item) == Card)
         console.print(item)
 
     if total > n_to_show:
@@ -116,7 +130,7 @@ def all_cards(show_all: bool = False) -> None:
     engine = get_engine()
     with Session(engine) as session:
         list_all_from_table(session, Card, "cards", max_to_show=max_to_show)
-
+    
 
 @app.command(rich_help_panel="Dev")
 def all_categories() -> None:
@@ -156,12 +170,28 @@ def all_practice_history() -> None:
     with Session(engine) as session:
         list_all_from_table(session, PracticeHistory, "practice history")
 
-
 @app.command()
-def delete() -> None:
-    """Delete a card."""
+def delete_all(rich_help_panel="Dev") -> None:
+    """Delete the database of cards."""
     console.print("[red]Currently not implemented.")
     raise typer.Exit()
+
+@app.command()
+def delete(front: str, back: str) -> None:
+    """Delete a card."""
+    # console.print("[red]Currently not implemented.")
+    engine = get_engine()
+    with Session(engine) as session:
+        statement = select(Card).where(Card.front == front and Card.back == back)
+        results = session.exec(statement)
+        card = results.first()
+        if card is None:
+            console.print(f"[red]No such card: {front} | {back}[/red]")        
+            return
+        session.delete(card)
+        session.commit()
+    console.print(f"[red]Deleted card: {card}[/red]")        
+
 
 
 @app.command()
