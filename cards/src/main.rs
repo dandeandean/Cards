@@ -12,9 +12,9 @@ fn main() -> Result<(), eframe::Error> {
     let mut name = "Arthur".to_owned();
     let mut age = 42;
 
-    eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
+    eframe::run_simple_native("Cards", options, move |ctx, _frame| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("My egui Application");
+            ui.heading("Cards");
             ui.horizontal(|ui| {
                 let name_label = ui.label("Your name: ");
                 ui.text_edit_singleline(&mut name)
