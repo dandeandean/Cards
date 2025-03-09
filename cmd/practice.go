@@ -58,6 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Note that we're not returning a command.
 	return m, nil
 }
+
 func (m model) View() string {
 	// The header
 	s := "What should we buy at the market?\n\n"
@@ -87,10 +88,16 @@ func (m model) View() string {
 	// Send the UI for rendering
 	return s
 }
-func practiceModel() model {
+
+func practiceModel(dir string) model {
+	cardChoices := CardsFromCsv(dir)
+	choices := make([]string, len(cardChoices))
+	for i, c := range cardChoices {
+		choices[i] = c.String()
+	}
 	return model{
 		// Our to-do list is a grocery list
-		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+		choices: choices,
 
 		// A map which indicates which choices are selected. We're using
 		// the  map like a mathematical set. The keys refer to the indexes
@@ -108,7 +115,8 @@ var practiceCmd = &cobra.Command{
 			fmt.Println("Usage: cards practice <dir>")
 			return
 		}
-		p := tea.NewProgram(practiceModel())
+		dir := args[0]
+		p := tea.NewProgram(practiceModel(dir))
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 		}
