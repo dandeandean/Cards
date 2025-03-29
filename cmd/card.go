@@ -5,33 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dandeandean/cards/core"
 	"github.com/spf13/cobra"
 )
 
-type Card struct {
-	front string
-	back  string
-}
-
-func (c Card) DumpToCsv(fName string) error {
-	if len(fName) > 4 && fName[len(fName)-4:] != ".csv" {
-		fName += ".csv"
-	}
-	f, err := os.OpenFile(fName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	w := csv.NewWriter(f)
-	err = w.Write([]string{c.front, c.back})
-	defer w.Flush()
-	if err != nil {
-		panic(err)
-	}
-	return err
-}
-
-func CardsFromCsv(fName string) []Card {
+func CardsFromCsv(fName string) []core.Card {
 	if len(fName) > 4 && fName[len(fName)-4:] != ".csv" {
 		fName += ".csv"
 	}
@@ -44,25 +22,16 @@ func CardsFromCsv(fName string) []Card {
 	if err != nil {
 		panic(err)
 	}
-	cards := make([]Card, 0)
+	cards := make([]core.Card, 0)
 	for _, line := range lines {
 		if len(line) >= 2 {
-			cards = append(cards, Card{line[0], line[1]})
+			cards = append(cards, core.Card{
+				Front: line[0],
+				Back:  line[1],
+			})
 		}
 	}
 	return cards
-}
-
-func (c Card) Front() string {
-	return c.front
-}
-
-func (c Card) Back() string {
-	return c.back
-}
-
-func (c Card) String() string {
-	return c.Front() + " | " + c.Back()
 }
 
 var showCmd = &cobra.Command{
@@ -92,7 +61,7 @@ var makeCmd = &cobra.Command{
 			return
 		}
 		dir, front, back := args[0], args[1], args[2]
-		c := Card{front: front, back: back}
+		c := core.Card{Front: front, Back: back}
 		fmt.Println(c.String(), dir)
 		err := c.DumpToCsv(dir)
 		if err != nil {

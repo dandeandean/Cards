@@ -3,11 +3,12 @@ package cards
 import (
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dandeandean/cards/core"
 	"github.com/spf13/cobra"
 )
 
 type model struct {
-	choices  []string         // items on the to-do list
+	choices  []core.Card      // items on the to-do list
 	cursor   int              // which to-do list item our cursor is pointing at
 	selected map[int]struct{} // which to-do items are selected
 }
@@ -79,7 +80,11 @@ func (m model) View() string {
 		}
 
 		// Render the row
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		cardRepr := choice.Front
+		if checked == "x" {
+			cardRepr += " | " + choice.Back
+		}
+		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, cardRepr)
 	}
 
 	// The footer
@@ -91,13 +96,9 @@ func (m model) View() string {
 
 func practiceModel(dir string) model {
 	cardChoices := CardsFromCsv(dir)
-	choices := make([]string, len(cardChoices))
-	for i, c := range cardChoices {
-		choices[i] = c.String()
-	}
 	return model{
 		// Our to-do list is a grocery list
-		choices: choices,
+		choices: cardChoices,
 
 		// A map which indicates which choices are selected. We're using
 		// the  map like a mathematical set. The keys refer to the indexes
