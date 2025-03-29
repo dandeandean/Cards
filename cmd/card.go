@@ -53,8 +53,16 @@ func CardsFromCsv(fName string) []Card {
 	return cards
 }
 
+func (c Card) Front() string {
+	return c.front
+}
+
+func (c Card) Back() string {
+	return c.back
+}
+
 func (c Card) String() string {
-	return c.front + " | " + c.back
+	return c.Front() + " | " + c.Back()
 }
 
 var showCmd = &cobra.Command{
