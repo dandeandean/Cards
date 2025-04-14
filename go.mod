@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/spf13/cobra v1.9.1
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (

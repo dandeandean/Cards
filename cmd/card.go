@@ -13,7 +13,11 @@ func CardsFromCsv(fName string) []core.Card {
 	if len(fName) > 4 && fName[len(fName)-4:] != ".csv" {
 		fName += ".csv"
 	}
-	f, err := os.Open(fName)
+	dir := os.Getenv("CARDSHOME")
+	if dir == "" {
+		dir = "."
+	}
+	f, err := os.Open(dir + "/" + fName)
 	if err != nil {
 		panic(err)
 	}
