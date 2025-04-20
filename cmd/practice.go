@@ -2,6 +2,9 @@ package cards
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dandeandean/cards/core"
 	"github.com/spf13/cobra"
@@ -94,8 +97,8 @@ func (m model) View() string {
 	return s
 }
 
-func practiceModel(dir string) model {
-	cardChoices := CardsFromCsv(dir)
+func practiceModel(fName string) model {
+	cardChoices := CardsFromCsv(fName)
 	return model{
 		// Our to-do list is a grocery list
 		choices: cardChoices,
@@ -121,6 +124,23 @@ var practiceCmd = &cobra.Command{
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 		}
+	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+		dirBase := os.Getenv("CARDSHOME")
+		if dirBase == "" {
+			dirBase = "./"
+		}
+		files, _ := os.ReadDir(dirBase)
+		fileNames := make([]string, 0)
+		for _, f := range files {
+			fName := f.Name()
+			if strings.Contains(fName, ".csv") &&
+				len(fName) > 4 &&
+				fName[len(fName)-4:] == ".csv" {
+				fileNames = append(fileNames, fName[0:len(fName)-4])
+			}
+		}
+		return fileNames, cobra.ShellCompDirectiveNoFileComp
 	},
 }
 
