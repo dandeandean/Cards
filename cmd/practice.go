@@ -3,12 +3,34 @@ package cards
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dandeandean/cards/core"
+	"github.com/dandeandean/cards/core/util"
 	"github.com/spf13/cobra"
 )
+
+var practiceCmd = &cobra.Command{
+	Use:   "practice",
+	Short: "Practice",
+	Long:  "Practice takes one argument, the path to the csv.",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 1 {
+			fmt.Println("Usage: cards practice <dir>")
+			return
+		}
+		dir := args[0]
+		p := tea.NewProgram(practiceModel(dir))
+		if _, err := p.Run(); err != nil {
+			fmt.Printf("Alas, there's been an error: %v", err)
+		}
+	},
+	ValidArgsFunction: getSetsCmp,
+}
+
+func init() {
+	rootCmd.AddCommand(practiceCmd)
+}
 
 type model struct {
 	choices  []core.Card      // items on the to-do list
@@ -98,7 +120,15 @@ func (m model) View() string {
 }
 
 func practiceModel(fName string) model {
-	cardChoices := CardsFromCsv(fName)
+
+	if len(fName) > 4 && fName[len(fName)-4:] != ".csv" {
+		fName += ".csv"
+	}
+	dir := os.Getenv("CARDSHOME")
+	if dir == "" {
+		dir = "."
+	}
+	cardChoices := util.CardsFromCsv(dir + "/" + fName)
 	return model{
 		// Our to-do list is a grocery list
 		choices: cardChoices,
@@ -108,42 +138,4 @@ func practiceModel(fName string) model {
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
-}
-
-var practiceCmd = &cobra.Command{
-	Use:   "practice",
-	Short: "Practice",
-	Long:  "Practice takes one argument, the path to the csv.",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			fmt.Println("Usage: cards practice <dir>")
-			return
-		}
-		dir := args[0]
-		p := tea.NewProgram(practiceModel(dir))
-		if _, err := p.Run(); err != nil {
-			fmt.Printf("Alas, there's been an error: %v", err)
-		}
-	},
-	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		dirBase := os.Getenv("CARDSHOME")
-		if dirBase == "" {
-			dirBase = "./"
-		}
-		files, _ := os.ReadDir(dirBase)
-		fileNames := make([]string, 0)
-		for _, f := range files {
-			fName := f.Name()
-			if strings.Contains(fName, ".csv") &&
-				len(fName) > 4 &&
-				fName[len(fName)-4:] == ".csv" {
-				fileNames = append(fileNames, fName[0:len(fName)-4])
-			}
-		}
-		return fileNames, cobra.ShellCompDirectiveNoFileComp
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(practiceCmd)
 }

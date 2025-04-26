@@ -1,45 +1,15 @@
 package cards
 
 import (
-	"encoding/csv"
 	"fmt"
-	"os"
 
 	"github.com/dandeandean/cards/core"
+	"github.com/dandeandean/cards/core/util"
 	"github.com/spf13/cobra"
 )
 
-func CardsFromCsv(fName string) []core.Card {
-	if len(fName) > 4 && fName[len(fName)-4:] != ".csv" {
-		fName += ".csv"
-	}
-	dir := os.Getenv("CARDSHOME")
-	if dir == "" {
-		dir = "."
-	}
-	f, err := os.Open(dir + "/" + fName)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	lines, err := csv.NewReader(f).ReadAll()
-	if err != nil {
-		panic(err)
-	}
-	cards := make([]core.Card, 0)
-	for _, line := range lines {
-		if len(line) >= 2 {
-			cards = append(cards, core.Card{
-				Front: line[0],
-				Back:  line[1],
-			})
-		}
-	}
-	return cards
-}
-
 var showCmd = &cobra.Command{
-	Use:   "show",
+	Use:   "show dir",
 	Short: "Show Cards in File",
 	Long:  "Show Cards in File.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -48,17 +18,17 @@ var showCmd = &cobra.Command{
 			return
 		}
 		dir := args[0]
-		cards := CardsFromCsv(dir)
+		cards := util.CardsFromCsv(dir)
 		for _, c := range cards {
 			fmt.Println(c.String())
 		}
 	},
+	ValidArgsFunction: getSetsCmp,
 }
 
 var makeCmd = &cobra.Command{
-	Use:   "make",
-	Short: "todo",
-	Long:  "todo",
+	Use:  "make dir front back",
+	Long: "Make new cards",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 3 {
 			fmt.Println("Usage: cards practice <dir> <front> <back>")
