@@ -28,8 +28,11 @@ var practiceCmd = &cobra.Command{
 	ValidArgsFunction: getSetsCmp,
 }
 
+var NumberToPractice int
+
 func init() {
 	rootCmd.AddCommand(practiceCmd)
+	practiceCmd.PersistentFlags().IntVarP(&NumberToPractice, "number", "n", 5, "number of cards to show")
 }
 
 type model struct {
