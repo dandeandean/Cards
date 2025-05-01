@@ -8,12 +8,15 @@ import (
 )
 
 func getSetsCmp(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+	fileNames := make([]string, 0)
+	if len(args) > 0 {
+		return fileNames, cobra.ShellCompDirectiveNoFileComp
+	}
 	dirBase := os.Getenv("CARDSHOME")
 	if dirBase == "" {
 		dirBase = "./"
 	}
 	files, _ := os.ReadDir(dirBase)
-	fileNames := make([]string, 0)
 	for _, f := range files {
 		fName := f.Name()
 		if strings.Contains(fName, ".csv") &&

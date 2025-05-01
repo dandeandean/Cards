@@ -2,6 +2,7 @@ package cards
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,17 +11,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var NumberToPractice int
+
+func init() {
+	rootCmd.AddCommand(practiceCmd)
+	practiceCmd.PersistentFlags().IntVarP(&NumberToPractice, "number", "n", 5, "number of cards to show")
+}
+
 var practiceCmd = &cobra.Command{
-	Use:   "practice",
-	Short: "Practice",
+	Use:   "practice dir",
+	Short: "Practice these cards",
 	Long:  "Practice takes one argument, the path to the csv.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			fmt.Println("Usage: cards practice <dir>")
 			return
 		}
-		dir := args[0]
-		p := tea.NewProgram(practiceModel(dir))
+		fName := args[0]
+		if len(fName) > 4 && fName[len(fName)-4:] != ".csv" {
+			fName += ".csv"
+		}
+		dir := os.Getenv("CARDSHOME")
+		if dir == "" {
+			dir = "."
+		}
+		cardChoices := util.CardsFromCsv(dir + "/" + fName)
+		pracSet := GetPracticeSet(cardChoices, NumberToPractice)
+		p := tea.NewProgram(practiceModel(pracSet))
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 		}
@@ -28,11 +46,17 @@ var practiceCmd = &cobra.Command{
 	ValidArgsFunction: getSetsCmp,
 }
 
-var NumberToPractice int
-
-func init() {
-	rootCmd.AddCommand(practiceCmd)
-	practiceCmd.PersistentFlags().IntVarP(&NumberToPractice, "number", "n", 5, "number of cards to show")
+func GetPracticeSet(choices []core.Card, n int) []core.Card {
+	if n > len(choices) {
+		fmt.Println("You can't have more choices than you do cards!")
+		return []core.Card{}
+	}
+	randomGroup := rand.Perm(len(choices))
+	pracSet := make([]core.Card, 0)
+	for i := range n {
+		pracSet = append(pracSet, choices[randomGroup[i]])
+	}
+	return pracSet
 }
 
 type model struct {
@@ -122,16 +146,8 @@ func (m model) View() string {
 	return s
 }
 
-func practiceModel(fName string) model {
+func practiceModel(cardChoices []core.Card) model {
 
-	if len(fName) > 4 && fName[len(fName)-4:] != ".csv" {
-		fName += ".csv"
-	}
-	dir := os.Getenv("CARDSHOME")
-	if dir == "" {
-		dir = "."
-	}
-	cardChoices := util.CardsFromCsv(dir + "/" + fName)
 	return model{
 		// Our to-do list is a grocery list
 		choices: cardChoices,

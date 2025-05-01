@@ -12,6 +12,7 @@ var showCmd = &cobra.Command{
 	Use:   "show dir",
 	Short: "Show Cards in File",
 	Long:  "Show Cards in File.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			fmt.Println("Usage: cards practice <dir>")
@@ -28,7 +29,8 @@ var showCmd = &cobra.Command{
 
 var makeCmd = &cobra.Command{
 	Use:  "make dir front back",
-	Long: "Make new cards",
+	Long: "Make new card",
+	Args: cobra.MinimumNArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 3 {
 			fmt.Println("Usage: cards practice <dir> <front> <back>")
